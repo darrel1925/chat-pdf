@@ -9,24 +9,24 @@ const SSEComponent: React.FC = () => {
   useEffect(() => {
     const url = new URL('http://localhost:8000/stream');
     url.searchParams.append('thread_id', 'thread_aYVuUpHCU5XLfNwyJrEovkIE');
-    url.searchParams.append('message', 'Tell me a joke!');
-    const eventSource = new EventSource(url.toString());
+    url.searchParams.append('message', 'Tell me a different joke about soda!');
+    const eventSource = new EventSource(url);
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
 
       if (data.end_of_stream) {
         eventSource.close();
-        return;
+      } else {
+        setMessage((prev) => prev + data.message);
       }
-
-      setMessage((prev) => prev + data.message);
     };
 
     return () => {
       eventSource.close();
     };
   }, []);
+
 
   return (
     <div>

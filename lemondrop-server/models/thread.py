@@ -100,8 +100,6 @@ class Thread(Model):
     """ 
     Represents a conversation with a user. Pass any user-specific context and files by creating Messages.
     """
-    open_ai_thread: Optional[OpenAIThread] = None
-    assistant_id = client.get_assistant().id
 
     class Meta:
         table_name = 'Thread'
@@ -119,7 +117,6 @@ class Thread(Model):
             'user_id': self.user_id,
         }
 
-    
     @staticmethod
     def from_dict(thread_dict: Dict[str, Any]) -> 'Thread':
         return Thread(
@@ -129,65 +126,37 @@ class Thread(Model):
             user_id=thread_dict['user_id'],
         )
 
+
+    @property
+    def stripped_messages(self) -> List[Dict[str, Any]]:
+        """
+        Returns messages without additional parameters for OpenAI.
+        """
+        return [{"content": message.content, "role": message.role} for message in self.messages if not message.is_hidden]
+
     
     @classmethod
     def get(cls, hash_key, range_key=None, consistent_read=False, **kwargs):
         """
-        Fetches Dynamo object and assigns OpenAI Thread to instance
+        Fetches Dynamo object
         """
         dynamo_thread: 'Thread' = super(Thread, cls).get(hash_key, range_key=range_key, consistent_read=consistent_read, **kwargs)
-
-        open_ai_thread: OpenAIThread = client.get_thread(thread_id=dynamo_thread.id)
-        dynamo_thread.open_ai_thread: OpenAIThread = open_ai_thread
-
         return dynamo_thread
 
     
     @staticmethod
     def create() -> None:
         """
-        Creates a new thread in Dynamo and OpenAI
+        Creates a new thread in Dynamo
         """
-        open_ai_thread: OpenAIThread = client.create_thread()
         new_thread: Thread = Thread(
             created_at_ms=current_time_ms(),
-            id=open_ai_thread.id,
+            id=str(uuid.uuid4()),
             messages=[],
         )
-        new_thread.open_ai_thread: OpenAIThread = open_ai_thread
         new_thread.save()
 
-        return new_thread
-
-    # def send_message(self, content: str) -> Message:
-    #     """
-    #     Sends a message to the thread. Returns the model's response.
-    #     """
-    #     # Add a message to the thread
-    #     self._add_message(content=content)
-
-    #     # Updates OpenAI's thread state from to ensure the thread is in sync.
-    #     self.open_ai_thread = client.get_thread(thread_id=self.id)
-
-    #     # Create a run used to get the model's response to the user's message
-    #     run: Run = client.create_run(thread_id=self.id)
-
-    #     # Waits for the model to respond to the user's most recent message.
-    #     client.wait_for_run(thread_id=self.id, run_id=run.id)
-
-    #     # Get models response
-    #     return self.get_message_from_run(run_id=run.id)
-    
-    
-    # def get_message_from_run(self, run_id: str) -> Message or None:
-    #     """
-    #     Gets a message from OpenAI.
-    #     """
-    #     message_id: str = client.get_message_id_from_run(thread_id=self.id, run_id=run_id)
-    #     thread_message: ThreadMessage = client.get_message(thread_id=self.id, message_id=message_id)
-    #     message: Message = self._add_message(content=thread_message.content[0].text.value, role=Role.Assistant)
-    #     return message    
-    
+        return new_thread  
     
     def add_message(self, content: str, role: Role = Role.User) -> Message:
         """
@@ -206,13 +175,6 @@ class Thread(Model):
         )
 
         return message
-
-    @property
-    def stripped_messages(self) -> List[Dict[str, Any]]:
-        """
-        Returns messages without additional parameters for OpenAI.
-        """
-        return [{"content": message.content, "role": message.role} for message in self.messages if not message.is_hidden]
 
     # def save_document_text_to_s3(self, document_text: str) -> None:
     #     Message.create_message("Here is my PDF:\n\n " + document_text, Role.User, is_hidden=True)
