@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+* Custom styles for the Google Maps Autocomplete dropdown
+* https://developers.google.com/maps/documentation/javascript/places-autocomplete#style_autocomplete
+*/
+
+/* Styles for the outer container of the Google Maps Autocomplete dropdown */
+.pac-container {
+  @apply border border-gray-300 rounded-lg shadow-md shadow-gray-500;
+}
+
+/* Styles for each individual suggestion/item within the dropdown */
+.pac-item {
+  @apply px-4 py-2 cursor-pointer;
+}
+
+/* Styles for a suggestion/item within the dropdown when it's being hovered over */
+.pac-item:hover {
+  @apply bg-gray-200;
+}
+
+/* Styles for the icon within each dropdown item (usually a location or search icon) */
+.pac-icon {
+  @apply w-4 h-4;
+}
+
+/* Styles for the query text within each dropdown item (this is the portion of the suggestion that matches the user's input) */
+.pac-item-query {
+  @apply text-lg;
+}
